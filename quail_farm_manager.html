@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quail Farm Daily Record Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #168646;
+            --primary-dark: #0f6b35;
+            --primary-light: #e8f5e9;
+            --accent: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #3498db;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #e0e6ed;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        [data-theme="dark"] {
+            --primary: #2ecc71;
+            --primary-dark: #27ae60;
+            --primary-light: #1e3a2f;
+            --accent: #2ecc71;
+            --bg: #1a1a2e;
+            --card-bg: #16213e;
+            --text: #e0e0e0;
+            --text-light: #a0a0a0;
+            --border: #2a2a4a;
+            --shadow: 0 2px 12px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { font-size: 16px; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .logo i { font-size: 1.5rem; }
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .header-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.25); }
+        .header-btn:active { transform: scale(0.95); }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .nav-item i { font-size: 1.25rem; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item:active { opacity: 0.7; }
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            padding-bottom: 80px;
+        }
+        .section { display: none; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover { box-shadow: var(--shadow-lg); }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title i { color: var(--primary); }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        @media (min-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card.profit { border-left-color: var(--accent); }
+        .stat-card.loss { border-left-color: var(--danger); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.info { border-left-color: var(--info); }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .stat-value.profit { color: var(--accent); }
+        .stat-value.loss { color: var(--danger); }
+        .stat-sub {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-family: inherit;
+            background: var(--card-bg);
+            color: var(--text);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(22, 134, 70, 0.1);
+        }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-decoration: none;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(22, 134, 70, 0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 6px 20px rgba(22, 134, 70, 0.4); }
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+        .btn-secondary:hover { background: #d0d7de; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--accent); color: white; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+        .btn-block { width: 100%; }
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .data-table th, .data-table td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table th {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+        .data-table tr:hover { background: var(--primary-light); }
+        .data-table td { color: var(--text); }
+        .data-table .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .data-table .action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        .data-table .action-btn.edit { background: var(--info); color: white; }
+        .data-table .action-btn.delete { background: var(--danger); color: white; }
+        .data-table .action-btn:hover { opacity: 0.8; transform: scale(1.05); }
+        .search-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .search-bar .form-input { flex: 1; min-width: 200px; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        .chart-grid {
+            display: grid;
+            gap: 1rem;
+        }
+        @media (min-width: 768px) { .chart-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .chart-grid { grid-template-columns: repeat(3, 1fr); } }
+        .report-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        @media (min-width: 768px) { .report-summary { grid-template-columns: repeat(3, 1fr); } }
+        .report-item {
+            background: var(--primary-light);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+        .report-item-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .report-item-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-title { font-size: 1.25rem; font-weight: 700; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 1rem;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid var(--primary);
+            max-width: 350px;
+        }
+        .toast.success { border-left-color: var(--accent); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-light);
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-state h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-info h4 { font-size: 1rem; margin-bottom: 0.25rem; }
+        .setting-info p { font-size: 0.875rem; color: var(--text-light); }
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--border);
+            border-radius: 28px;
+            transition: 0.3s;
+        }
+        .toggle-slider:before {
+            content: "";
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle input:checked + .toggle-slider { background: var(--primary); }
+        .toggle input:checked + .toggle-slider:before { transform: translateX(22px); }
+        @media print {
+            .header, .bottom-nav, .header-actions, .btn-group, .action-btn, .search-bar { display: none !important; }
+            .main-content { padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            body { background: white; }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-success { background: var(--primary-light); color: var(--primary); }
+        .badge-danger { background: #fdeaea; color: var(--danger); }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+            .stat-value { font-size: 1.25rem; }
+            .card { padding: 1rem; }
+            .chart-container { height: 220px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-dove"></i>
+                <span>Quail Farm</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <button class="header-btn" onclick="showSettings()" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    <main class="main-content">
+        <section id="dashboard" class="section active">
+            <div class="stats-grid" id="dashboardStats"></div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-chart-line"></i> Production Overview</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="dashboardChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-list"></i> Recent Records</h3>
+                </div>
+                <div class="table-container" id="recentRecords"></div>
+            </div>
+        </section>
+        <section id="entry" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-plus-circle"></i> Daily Entry</h3>
+                    <span class="badge badge-success" id="entryMode">New Entry</span>
+                </div>
+                <form id="dailyEntryForm" onsubmit="saveEntry(event)">
+                    <input type="hidden" id="editId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date *</label>
+                            <input type="date" class="form-input" id="entryDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Birds</label>
+                            <input type="number" class="form-input" id="totalBirds" value="45" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Eggs Collected *</label>
+                            <input type="number" class="form-input" id="eggsCollected" min="0" required placeholder="Number of eggs">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Feed Quantity (kg) *</label>
+                            <input type="number" class="form-input" id="feedQuantity" step="0.01" min="0" required placeholder="Kg of feed">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Feed Cost (BDT) *</label>
+                            <input type="number" class="form-input" id="feedCost" step="0.01" min="0" required placeholder="Total feed cost">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Eggs Sold</label>
+                            <input type="number" class="form-input" id="eggsSold" min="0" placeholder="Number of eggs sold">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Sale Price per Egg (BDT)</label>
+                            <input type="number" class="form-input" id="eggPrice" step="0.01" min="0" placeholder="Price per egg">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Other Expenses (BDT)</label>
+                            <input type="number" class="form-input" id="otherExpenses" step="0.01" min="0" placeholder="Medicine, utilities, etc.">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-textarea" id="notes" placeholder="Any additional notes..."></textarea>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-save"></i> Save Record
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card" id="quickStats" style="display:none;">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-calculator"></i> Quick Preview</h3>
+                </div>
+                <div class="report-summary" id="quickStatsContent"></div>
+            </div>
+        </section>
+        <section id="records" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-database"></i> All Records</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-success" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                        <button class="btn btn-sm btn-info" onclick="exportToCSV()">
+                            <i class="fas fa-file-csv"></i> CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="search-bar">
+                    <input type="date" class="form-input" id="searchDate" placeholder="Search by date">
+                    <button class="btn btn-primary" onclick="searchRecords()">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearSearch()">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+                <div class="table-container" id="recordsTable"></div>
+            </div>
+        </section>
+        <section id="reports" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-file-alt"></i> Reports</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-primary" onclick="printReport()">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" id="reportType" onchange="generateReport()">
+                            <option value="daily">Daily Report</option>
+                            <option value="weekly">Weekly Report</option>
+                            <option value="monthly">Monthly Report</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Date/Period</label>
+                        <input type="date" class="form-input" id="reportDate" onchange="generateReport()">
+                    </div>
+                </div>
+                <div id="reportContent"></div>
+            </div>
+        </section>
+        <section id="charts" class="section">
+            <div class="chart-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-egg"></i> Egg Production</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="eggChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-wheat-awn"></i> Feed Consumption</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="feedChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-coins"></i> Profit/Loss</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="profitChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="backup" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-shield-halved"></i> Backup & Restore</h3>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Export Backup (JSON)</h4>
+                        <p>Download all your data as a JSON file</p>
+                    </div>
+                    <button class="btn btn-success" onclick="exportBackup()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Import Backup (JSON)</h4>
+                        <p>Restore data from a previously exported JSON file</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">
+                        <i class="fas fa-upload"></i> Import
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importBackup(event)">
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Clear All Data</h4>
+                        <p style="color:var(--danger)">Warning: This will permanently delete all records!</p>
+                    </div>
+                    <button class="btn btn-danger" onclick="confirmClearAll()">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="showSection('dashboard')">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+        </button>
+        <button class="nav-item" onclick="showSection('entry')">
+            <i class="fas fa-plus-circle"></i>
+            <span>Entry</span>
+        </button>
+        <button class="nav-item" onclick="showSection('records')">
+            <i class="fas fa-list"></i>
+            <span>Records</span>
+        </button>
+        <button class="nav-item" onclick="showSection('reports')">
+            <i class="fas fa-chart-pie"></i>
+            <span>Reports</span>
+        </button>
+        <button class="nav-item" onclick="showSection('charts')">
+            <i class="fas fa-chart-bar"></i>
+            <span>Charts</span>
+        </button>
+    </nav>
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-cog"></i> Settings</h3>
+                <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Dark Mode</h4>
+                    <p>Toggle between light and dark theme</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Default Bird Count</h4>
+                    <p>Set your default number of birds</p>
+                </div>
+                <input type="number" class="form-input" style="width:100px;" id="defaultBirds" value="45" onchange="saveSettings()">
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Backup & Restore</h4>
+                    <p>Manage your data backup</p>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="closeModal('settingsModal'); showSection('backup')">
+                    Open
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Confirm Delete</h3>
+                <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+            </div>
+            <p>Are you sure you want to delete this record? This action cannot be undone.</p>
+            <div class="btn-group" style="margin-top:1.5rem;">
+                <button class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="clearAllModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Clear All Data</h3>
+                <button class="modal-close" onclick="closeModal('clearAllModal')">&times;</button>
+            </div>
+            <p style="color:var(--danger); font-weight:600;">Warning: This will permanently delete ALL your records. This action cannot be undone!</p>
+            <p style="margin-top:0.5rem;">Please make sure you have exported a backup before proceeding.</p>
+            <div class="btn-group" style="margin-top:1.5rem;">
+                <button class="btn btn-danger" onclick="clearAllData()">
+                    <i class="fas fa-trash"></i> Yes, Clear Everything
+                </button>
+                <button class="btn btn-secondary" onclick="closeModal('clearAllModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== STATE MANAGEMENT ====================
+        const STORAGE_KEY = 'quailFarmRecords';
+        const SETTINGS_KEY = 'quailFarmSettings';
+        let records = [];
+        let chartInstances = {};
+        let deleteTargetId = null;
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecords();
+            loadSettings();
+            initDateInputs();
+            renderDashboard();
+            renderRecords();
+            generateReport();
+            initCharts();
+            document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+        });
+
+        function initDateInputs() {
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.showPicker && this.showPicker();
+                });
+            });
+        }
+
+        // ==================== DATA STORAGE ====================
+        function loadRecords() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    records = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.error('Error loading records:', e);
+                records = [];
+            }
+        }
+
+        function saveRecords() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            } catch (e) {
+                console.error('Error saving records:', e);
+                showToast('Error saving data. Storage might be full.', 'error');
+            }
+        }
+
+        function loadSettings() {
+            try {
+                const stored = localStorage.getItem(SETTINGS_KEY);
+                if (stored) {
+                    const settings = JSON.parse(stored);
+                    if (settings.darkMode) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        document.getElementById('darkModeToggle').checked = true;
+                        document.getElementById('themeIcon').className = 'fas fa-sun';
+                    }
+                    if (settings.defaultBirds) {
+                        document.getElementById('defaultBirds').value = settings.defaultBirds;
+                        document.getElementById('totalBirds').value = settings.defaultBirds;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading settings:', e);
+            }
+        }
+
+        function saveSettings() {
+            const settings = {
+                darkMode: document.documentElement.getAttribute('data-theme') === 'dark',
+                defaultBirds: parseInt(document.getElementById('defaultBirds').value) || 45
+            };
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            document.getElementById('totalBirds').value = settings.defaultBirds;
+            showToast('Settings saved!', 'success');
+        }
+
+        // ==================== NAVIGATION ====================
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const navItems = document.querySelectorAll('.nav-item');
+            const sectionMap = { 'dashboard': 0, 'entry': 1, 'records': 2, 'reports': 3, 'charts': 4, 'backup': 2 };
+            if (sectionMap[sectionId] !== undefined && navItems[sectionMap[sectionId]]) {
+                navItems[sectionMap[sectionId]].classList.add('active');
+            }
+            if (sectionId === 'charts') {
+                setTimeout(initCharts, 100);
+            }
+            if (sectionId === 'reports') {
+                generateReport();
+            }
+            if (sectionId === 'dashboard') {
+                renderDashboard();
+            }
+            window.scrollTo(0, 0);
+        }
+
+        // ==================== THEME ====================
+        function toggleTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                document.getElementById('themeIcon').className = 'fas fa-moon';
+                document.getElementById('darkModeToggle').checked = false;
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('themeIcon').className = 'fas fa-sun';
+                document.getElementById('darkModeToggle').checked = true;
+            }
+            saveSettings();
+            setTimeout(initCharts, 100);
+        }
+
+        // ==================== DASHBOARD ====================
+        function renderDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecord = records.find(r => r.date === today);
+            const totalBirds = parseInt(document.getElementById('defaultBirds').value) || 45;
+
+            const currentMonth = today.substring(0, 7);
+            const monthRecords = records.filter(r => r.date.startsWith(currentMonth));
+
+            let monthEggs = 0, monthFeed = 0, monthFeedCost = 0, monthRevenue = 0, monthExpenses = 0;
+            monthRecords.forEach(r => {
+                monthEggs += parseFloat(r.eggsCollected) || 0;
+                monthFeed += parseFloat(r.feedQuantity) || 0;
+                monthFeedCost += parseFloat(r.feedCost) || 0;
+                monthRevenue += (parseFloat(r.eggsSold) || 0) * (parseFloat(r.eggPrice) || 0);
+                monthExpenses += (parseFloat(r.feedCost) || 0) + (parseFloat(r.otherExpenses) || 0);
+            });
+            const monthProfit = monthRevenue - monthExpenses;
+
+            const todayEggs = todayRecord ? (parseFloat(todayRecord.eggsCollected) || 0) : 0;
+            const todayFeed = todayRecord ? (parseFloat(todayRecord.feedQuantity) || 0) : 0;
+            const todayFeedCost = todayRecord ? (parseFloat(todayRecord.feedCost) || 0) : 0;
+            const todayRevenue = todayRecord ? (parseFloat(todayRecord.eggsSold) || 0) * (parseFloat(todayRecord.eggPrice) || 0) : 0;
+            const todayExpenses = todayFeedCost + (todayRecord ? (parseFloat(todayRecord.otherExpenses) || 0) : 0);
+            const todayProfit = todayRevenue - todayExpenses;
+            const avgEggsPerBird = totalBirds > 0 ? (todayEggs / totalBirds).toFixed(2) : 0;
+            const feedCostPerEgg = todayEggs > 0 ? (todayFeedCost / todayEggs).toFixed(2) : 0;
+
+            const statsHTML = `
+                <div class="stat-card info">
+                    <div class="stat-label">Total Birds</div>
+                    <div class="stat-value">${totalBirds}</div>
+                    <div class="stat-sub">Active flock</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Today's Eggs</div>
+                    <div class="stat-value">${todayEggs}</div>
+                    <div class="stat-sub">${avgEggsPerBird} per bird</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Feed Today</div>
+                    <div class="stat-value">${todayFeed.toFixed(2)} kg</div>
+                    <div class="stat-sub">৳${todayFeedCost.toFixed(2)} cost</div>
+                </div>
+                <div class="stat-card ${todayProfit >= 0 ? 'profit' : 'loss'}">
+                    <div class="stat-label">Today's P/L</div>
+                    <div class="stat-value ${todayProfit >= 0 ? 'profit' : 'loss'}">
+                        ৳${Math.abs(todayProfit).toFixed(2)}
+                    </div>
+                    <div class="stat-sub">${todayProfit >= 0 ? 'Profit' : 'Loss'}</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-label">Egg Sales</div>
+                    <div class="stat-value">৳${todayRevenue.toFixed(2)}</div>
+                    <div class="stat-sub">${todayRecord ? (todayRecord.eggsSold || 0) : 0} eggs sold</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Other Expenses</div>
+                    <div class="stat-value">৳${(todayRecord ? (parseFloat(todayRecord.otherExpenses) || 0) : 0).toFixed(2)}</div>
+                    <div class="stat-sub">Medicine, etc.</div>
+                </div>
+                <div class="stat-card ${monthProfit >= 0 ? 'profit' : 'loss'}">
+                    <div class="stat-label">Monthly P/L</div>
+                    <div class="stat-value ${monthProfit >= 0 ? 'profit' : 'loss'}">
+                        ৳${Math.abs(monthProfit).toFixed(2)}
+                    </div>
+                    <div class="stat-sub">${monthProfit >= 0 ? 'Profit' : 'Loss'} this month</div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-label">Feed/Egg</div>
+                    <div class="stat-value">৳${feedCostPerEgg}</div>
+                    <div class="stat-sub">Cost per egg</div>
+                </div>
+            `;
+            document.getElementById('dashboardStats').innerHTML = statsHTML;
+
+            const recent = [...records].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+            if (recent.length === 0) {
+                document.getElementById('recentRecords').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No Records Yet</h3>
+                        <p>Add your first daily entry to see data here.</p>
+                    </div>
+                `;
+            } else {
+                let html = `<table class="data-table">
+                    <thead><tr>
+                        <th>Date</th><th>Eggs</th><th>Feed</th><th>Sales</th><th>Profit</th>
+                    </tr></thead><tbody>`;
+                recent.forEach(r => {
+                    const revenue = (parseFloat(r.eggsSold) || 0) * (parseFloat(r.eggPrice) || 0);
+                    const expenses = (parseFloat(r.feedCost) || 0) + (parseFloat(r.otherExpenses) || 0);
+                    const profit = revenue - expenses;
+                    html += `<tr>
+                        <td>${formatDate(r.date)}</td>
+                        <td>${r.eggsCollected || 0}</td>
+                        <td>${r.feedQuantity || 0} kg</td>
+                        <td>৳${revenue.toFixed(2)}</td>
+                        <td style="color:${profit >= 0 ? 'var(--accent)' : 'var(--danger)'};font-weight:700;">
+                            ${profit >= 0 ? '+' : ''}৳${profit.toFixed(2)}
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('recentRecords').innerHTML = html;
+            }
+
+            renderDashboardChart();
+        }
+
+        function renderDashboardChart() {
+            const ctx = document.getElementById('dashboardChart');
+            if (!ctx) return;
+
+            if (chartInstances.dashboard) chartInstances.dashboard.destroy();
+
+            const last7Days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                last7Days.push(d.toISOString().split('T')[0]);
+            }
+
+            const labels = last7Days.map(d => {
+                const date = new Date(d);
+                return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+            });
+
+            const eggData = last7Days.map(d => {
+                const r = records.find(rec => rec.date === d);
+                return r ? (parseFloat(r.eggsCollected) || 0) : 0;
+            });
+
+            const profitData = last7Days.map(d => {
+                const r = records.find(rec => rec.date === d);
+                if (!r) return 0;
+                const revenue = (parseFloat(r.eggsSold) || 0) * (parseFloat(r.eggPrice) || 0);
+                const expenses = (parseFloat(r.feedCost) || 0) + (parseFloat(r.otherExpenses) || 0);
+                return revenue - expenses;
+            });
+
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#e0e0e0' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
+            chartInstances.dashboard = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Eggs Collected',
+                            data: eggData,
+                            backgroundColor: 'rgba(22, 134, 70, 0.7)',
+                            borderColor: '#168646',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Profit/Loss (৳)',
+                            data: profitData,
+                            type: 'line',
+                            borderColor: '#f39c12',
+                            backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#f39c12',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: textColor } }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: { color: textColor },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== ENTRY FORM ====================
+        function saveEntry(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('editId').value;
+            const date = document.getElementById('entryDate').value;
+
+            if (!date) {
+                showToast('Please select a date', 'error');
+                return;
+            }
+
+            const entry = {
+                id: id || Date.now().toString(),
+                date: date,
+                totalBirds: document.getElementById('totalBirds').value,
+                eggsCollected: document.getElementById('eggsCollected').value,
+                feedQuantity: document.getElementById('feedQuantity').value,
+                feedCost: document.getElementById('feedCost').value,
+                eggsSold: document.getElementById('eggsSold').value || 0,
+                eggPrice: document.getElementById('eggPrice').value || 0,
+                otherExpenses: document.getElementById('otherExpenses').value || 0,
+                notes: document.getElementById('notes').value,
+                createdAt: id ? (records.find(r => r.id === id)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            entry.totalSales = (parseFloat(entry.eggsSold) || 0) * (parseFloat(entry.eggPrice) || 0);
+            entry.totalExpenses = (parseFloat(entry.feedCost) || 0) + (parseFloat(entry.otherExpenses) || 0);
+            entry.dailyProfit = entry.totalSales - entry.totalExpenses;
+            entry.avgEggsPerBird = entry.totalBirds > 0 ? ((parseFloat(entry.eggsCollected) || 0) / parseInt(entry.totalBirds)).toFixed(2) : 0;
+            entry.feedCostPerEgg = (parseFloat(entry.eggsCollected) || 0) > 0 ? ((parseFloat(entry.feedCost) || 0) / parseFloat(entry.eggsCollected)).toFixed(2) : 0;
+
+            if (id) {
+                const index = records.findIndex(r => r.id === id);
+                if (index !== -1) records[index] = entry;
+                showToast('Record updated successfully!', 'success');
+            } else {
+                const existingIndex = records.findIndex(r => r.date === date);
+                if (existingIndex !== -1) {
+                    if (confirm('A record already exists for this date. Do you want to update it?')) {
+                        records[existingIndex] = entry;
+                        showToast('Record updated successfully!', 'success');
+                    } else {
+                        return;
+                    }
+                } else {
+                    records.push(entry);
+                    showToast('Record saved successfully!', 'success');
+                }
+            }
+
+            saveRecords();
+            resetForm();
+            renderDashboard();
+            renderRecords();
+            generateReport();
+            initCharts();
+            showSection('dashboard');
+        }
+
+        function resetForm() {
+            document.getElementById('dailyEntryForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('totalBirds').value = document.getElementById('defaultBirds').value || 45;
+            document.getElementById('entryMode').textContent = 'New Entry';
+            document.getElementById('entryMode').className = 'badge badge-success';
+            document.getElementById('quickStats').style.display = 'none';
+        }
+
+        ['eggsCollected', 'feedQuantity', 'feedCost', 'eggsSold', 'eggPrice', 'otherExpenses'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', updateQuickStats);
+        });
+
+        function updateQuickStats() {
+            const eggs = parseFloat(document.getElementById('eggsCollected').value) || 0;
+            const feed = parseFloat(document.getElementById('feedQuantity').value) || 0;
+            const feedCost = parseFloat(document.getElementById('feedCost').value) || 0;
+            const sold = parseFloat(document.getElementById('eggsSold').value) || 0;
+            const price = parseFloat(document.getElementById('eggPrice').value) || 0;
+            const other = parseFloat(document.getElementById('otherExpenses').value) || 0;
+            const birds = parseInt(document.getElementById('totalBirds').value) || 45;
+
+            if (eggs > 0 || feed > 0) {
+                const revenue = sold * price;
+                const expenses = feedCost + other;
+                const profit = revenue - expenses;
+                const avgPerBird = birds > 0 ? (eggs / birds).toFixed(2) : 0;
+                const costPerEgg = eggs > 0 ? (feedCost / eggs).toFixed(2) : 0;
+
+                document.getElementById('quickStats').style.display = 'block';
+                document.getElementById('quickStatsContent').innerHTML = `
+                    <div class="report-item">
+                        <div class="report-item-value">${eggs}</div>
+                        <div class="report-item-label">Total Eggs</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">${avgPerBird}</div>
+                        <div class="report-item-label">Per Bird</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">৳${revenue.toFixed(2)}</div>
+                        <div class="report-item-label">Revenue</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">৳${expenses.toFixed(2)}</div>
+                        <div class="report-item-label">Expenses</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value" style="color:${profit >= 0 ? 'var(--accent)' : 'var(--danger)'}">
+                            ${profit >= 0 ? '+' : ''}৳${profit.toFixed(2)}
+                        </div>
+                        <div class="report-item-label">Profit/Loss</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">৳${costPerEgg}</div>
+                        <div class="report-item-label">Feed/Egg</div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('quickStats').style.display = 'none';
+            }
+        }
+
+        // ==================== RECORDS ====================
+        function renderRecords(filterDate = null) {
+            let displayRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filterDate) {
+                displayRecords = displayRecords.filter(r => r.date === filterDate);
+            }
+
+            if (displayRecords.length === 0) {
+                document.getElementById('recordsTable').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Records Found</h3>
+                        <p>${filterDate ? 'No records for the selected date.' : 'Start by adding your first daily entry.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<table class="data-table">
+                <thead><tr>
+                    <th>Date</th>
+                    <th>Birds</th>
+                    <th>Eggs</th>
+                    <th>Feed</th>
+                    <th>Feed Cost</th>
+                    <th>Sold</th>
+                    <th>Revenue</th>
+                    <th>Expenses</th>
+                    <th>Profit</th>
+                    <th>Actions</th>
+                </tr></thead><tbody>`;
+
+            displayRecords.forEach(r => {
+                const revenue = (parseFloat(r.eggsSold) || 0) * (parseFloat(r.eggPrice) || 0);
+                const expenses = (parseFloat(r.feedCost) || 0) + (parseFloat(r.otherExpenses) || 0);
+                const profit = revenue - expenses;
+
+                html += `<tr>
+                    <td><strong>${formatDate(r.date)}</strong></td>
+                    <td>${r.totalBirds || '-'}</td>
+                    <td>${r.eggsCollected || 0}</td>
+                    <td>${r.feedQuantity || 0} kg</td>
+                    <td>৳${parseFloat(r.feedCost || 0).toFixed(2)}</td>
+                    <td>${r.eggsSold || 0}</td>
+                    <td>৳${revenue.toFixed(2)}</td>
+                    <td>৳${expenses.toFixed(2)}</td>
+                    <td style="color:${profit >= 0 ? 'var(--accent)' : 'var(--danger)'};font-weight:700;">
+                        ${profit >= 0 ? '+' : ''}৳${profit.toFixed(2)}
+                    </td>
+                    <td class="actions">
+                        <button class="action-btn edit" onclick="editRecord('${r.id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete" onclick="confirmDelete('${r.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('recordsTable').innerHTML = html;
+        }
+
+        function searchRecords() {
+            const date = document.getElementById('searchDate').value;
+            if (date) {
+                renderRecords(date);
+            } else {
+                showToast('Please select a date to search', 'warning');
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchDate').value = '';
+            renderRecords();
+        }
+
+        function editRecord(id) {
+            const record = records.find(r => r.id === id);
+            if (!record) return;
+
+            document.getElementById('editId').value = record.id;
+            document.getElementById('entryDate').value = record.date;
+            document.getElementById('totalBirds').value = record.totalBirds || 45;
+            document.getElementById('eggsCollected').value = record.eggsCollected || '';
+            document.getElementById('feedQuantity').value = record.feedQuantity || '';
+            document.getElementById('feedCost').value = record.feedCost || '';
+            document.getElementById('eggsSold').value = record.eggsSold || '';
+            document.getElementById('eggPrice').value = record.eggPrice || '';
+            document.getElementById('otherExpenses').value = record.otherExpenses || '';
+            document.getElementById('notes').value = record.notes || '';
+
+            document.getElementById('entryMode').textContent = 'Edit Mode';
+            document.getElementById('entryMode').className = 'badge badge-danger';
+
+            updateQuickStats();
+            showSection('entry');
+            showToast('Editing record...', 'info');
+        }
+
+        function confirmDelete(id) {
+            deleteTargetId = id;
+            openModal('deleteModal');
+            document.getElementById('confirmDeleteBtn').onclick = function() {
+                deleteRecord(deleteTargetId);
+                closeModal('deleteModal');
+            };
+        }
+
+        function deleteRecord(id) {
+            records = records.filter(r => r.id !== id);
+            saveRecords();
+            renderRecords();
+            renderDashboard();
+            generateReport();
+            initCharts();
+            showToast('Record deleted successfully', 'success');
+        }
+
+        // ==================== REPORTS ====================
+        function generateReport() {
+            const type = document.getElementById('reportType').value;
+            const dateStr = document.getElementById('reportDate').value;
+
+            if (!dateStr) {
+                document.getElementById('reportContent').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar"></i>
+                        <h3>Select a Date</h3>
+                        <p>Choose a date to generate the report.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let filteredRecords = [];
+            const selectedDate = new Date(dateStr);
+
+            switch(type) {
+                case 'daily':
+                    filteredRecords = records.filter(r => r.date === dateStr);
+                    break;
+                case 'weekly':
+                    const weekStart = new Date(selectedDate);
+                    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+                    filteredRecords = records.filter(r => {
+                        const d = new Date(r.date);
+                        return d >= weekStart && d <= weekEnd;
+                    });
+                    break;
+                case 'monthly':
+                    const monthPrefix = dateStr.substring(0, 7);
+                    filteredRecords = records.filter(r => r.date.startsWith(monthPrefix));
+                    break;
+                case 'all':
+                    filteredRecords = [...records];
+                    break;
+            }
+
+            filteredRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (filteredRecords.length === 0) {
+                document.getElementById('reportContent').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>No Data Available</h3>
+                        <p>No records found for the selected period.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let totalEggs = 0, totalFeed = 0, totalFeedCost = 0, totalRevenue = 0, totalExpenses = 0, totalOther = 0;
+            filteredRecords.forEach(r => {
+                totalEggs += parseFloat(r.eggsCollected) || 0;
+                totalFeed += parseFloat(r.feedQuantity) || 0;
+                totalFeedCost += parseFloat(r.feedCost) || 0;
+                totalRevenue += (parseFloat(r.eggsSold) || 0) * (parseFloat(r.eggPrice) || 0);
+                totalOther += parseFloat(r.otherExpenses) || 0;
+            });
+            totalExpenses = totalFeedCost + totalOther;
+            const netProfit = totalRevenue - totalExpenses;
+            const avgEggsPerDay = filteredRecords.length > 0 ? (totalEggs / filteredRecords.length).toFixed(1) : 0;
+            const avgFeedPerDay = filteredRecords.length > 0 ? (totalFeed / filteredRecords.length).toFixed(2) : 0;
+            const avgProfitPerDay = filteredRecords.length > 0 ? (netProfit / filteredRecords.length).toFixed(2) : 0;
+
+            let periodLabel = '';
+            switch(type) {
+                case 'daily': periodLabel = formatDate(dateStr); break;
+                case 'weekly':
+                    const ws = new Date(selectedDate);
+                    ws.setDate(ws.getDate() - ws.getDay());
+                    const we = new Date(ws);
+                    we.setDate(we.getDate() + 6);
+                    periodLabel = `${formatDate(ws.toISOString().split('T')[0])} - ${formatDate(we.toISOString().split('T')[0])}`;
+                    break;
+                case 'monthly':
+                    const m = new Date(dateStr + '-01');
+                    periodLabel = m.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    break;
+                case 'all': periodLabel = 'All Time'; break;
+            }
+
+            let html = `
+                <div class="report-summary">
+                    <div class="report-item">
+                        <div class="report-item-value">${totalEggs.toFixed(0)}</div>
+                        <div class="report-item-label">Total Eggs</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">${totalFeed.toFixed(2)} kg</div>
+                        <div class="report-item-label">Total Feed</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">৳${totalFeedCost.toFixed(2)}</div>
+                        <div class="report-item-label">Total Feed Cost</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">৳${totalRevenue.toFixed(2)}</div>
+                        <div class="report-item-label">Total Revenue</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value">৳${totalExpenses.toFixed(2)}</div>
+                        <div class="report-item-label">Total Expenses</div>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-value" style="color:${netProfit >= 0 ? 'var(--accent)' : 'var(--danger)'}">
+                            ${netProfit >= 0 ? '+' : ''}৳${netProfit.toFixed(2)}
+                        </div>
+                        <div class="report-item-label">Net Profit</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:1rem;">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-info-circle"></i> Summary - ${periodLabel}</h3>
+                    </div>
+                    <div class="report-summary">
+                        <div class="report-item">
+                            <div class="report-item-value">${avgEggsPerDay}</div>
+                            <div class="report-item-label">Avg Eggs/Day</div>
+                        </div>
+                        <div class="report-item">
+                            <div class="report-item-value">${avgFeedPerDay} kg</div>
+                            <div class="report-item-label">Avg Feed/Day</div>
+                        </div>
+                        <div class="report-item">
+                            <div class="report-item-value">${avgProfitPerDay >= 0 ? '+' : ''}৳${avgProfitPerDay}</div>
+                            <div class="report-item-label">Avg Profit/Day</div>
+                        </div>
+                        <div class="report-item">
+                            <div class="report-item-value">${filteredRecords.length}</div>
+                            <div class="report-item-label">Days Recorded</div>
+                        </div>
+                        <div class="report-item">
+                            <div class="report-item-value">৳${totalOther.toFixed(2)}</div>
+                            <div class="report-item-label">Other Expenses</div>
+                        </div>
+                        <div class="report-item">
+                            <div class="report-item-value">৳${totalFeedCost > 0 ? (totalFeedCost / totalEggs).toFixed(2) : 0}</div>
+                            <div class="report-item-label">Feed Cost/Egg</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead><tr>
+                            <th>Date</th><th>Eggs</th><th>Feed</th><th>Feed Cost</th><th>Sold</th><th>Revenue</th><th>Expenses</th><th>Profit</th>
+                        </tr></thead><tbody>`;
+
+            filteredRecords.forEach(r => {
+                const revenue = (parseFloat(r.eggsSold) || 0) * (parseFloat(r.eggPrice) || 0);
+                const expenses = (parseFloat(r.feedCost) || 0) + (parseFloat(r.otherExpenses) || 0);
+                const profit = revenue - expenses;
+                html += `<tr>
+                    <td>${formatDate(r.date)}</td>
+                    <td>${r.eggsCollected || 0}</td>
+                    <td>${r.feedQuantity || 0} kg</td>
+                    <td>৳${parseFloat(r.feedCost || 0).toFixed(2)}</td>
+                    <td>${r.eggsSold || 0}</td>
+                    <td>৳${revenue.toFixed(2)}</td>
+                    <td>৳${expenses.toFixed(2)}</td>
+                    <td style="color:${profit >= 0 ? 'var(--accent)' : 'var(--danger)'};font-weight:700;">
+                        ${profit >= 0 ? '+' : ''}৳${profit.toFixed(2)}
+                    </td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        // ==================== CHARTS ====================
+        function initCharts() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#e0e0e0' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
+            const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const last30 = sortedRecords.slice(-30);
+            const labels = last30.map(r => {
+                const d = new Date(r.date);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            // Egg Production Chart
+            const eggCtx = document.getElementById('eggChart');
+            if (eggCtx) {
+                if (chartInstances.egg) chartInstances.egg.destroy();
+                const eggData = last30.map(r => parseFloat(r.eggsCollected) || 0);
+                chartInstances.egg = new Chart(eggCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Eggs Collected',
+                            data: eggData,
+                            backgroundColor: 'rgba(22, 134, 70, 0.7)',
+                            borderColor: '#168646',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: textColor } } },
+                        scales: {
+                            x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                            y: { ticks: { color: textColor }, grid: { color: gridColor } }
+                        }
+                    }
+                });
+            }
+
+            // Feed Consumption Chart
+            const feedCtx = document.getElementById('feedChart');
+            if (feedCtx) {
+                if (chartInstances.feed) chartInstances.feed.destroy();
+                const feedData = last30.map(r => parseFloat(r.feedQuantity) || 0);
+                chartInstances.feed = new Chart(feedCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Feed (kg)',
+                            data: feedData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#3498db'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: textColor } } },
+                        scales: {
+                            x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                            y: { ticks: { color: textColor }, grid: { color: gridColor } }
+                        }
+                    }
+                });
+            }
+
+            // Profit Chart
+            const profitCtx = document.getElementById('profitChart');
+            if (profitCtx) {
+                if (chartInstances.profit) chartInstances.profit.destroy();
+                const profitData = last30.map(r => {
+                    const revenue = (parseFloat(r.eggsSold) || 0) * (parseFloat(r.eggPrice) || 0);
+                    const expenses = (parseFloat(r.feedCost) || 0) + (parseFloat(r.otherExpenses) || 0);
+                    return revenue - expenses;
+                });
+                chartInstances.profit = new Chart(profitCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Profit/Loss (৳)',
+                            data: profitData,
+                            backgroundColor: profitData.map(v => v >= 0 ? 'rgba(46, 204, 113, 0.7)' : 'rgba(231, 76, 60, 0.7)'),
+                            borderColor: profitData.map(v => v >= 0 ? '#2ecc71' : '#e74c3c'),
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: textColor } } },
+                        scales: {
+                            x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                            y: { ticks: { color: textColor }, grid: { color: gridColor } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ==================== EXPORT ====================
+        function exportToExcel() {
+            if (records.length === 0) {
+                showToast('No records to export', 'warning');
+                return;
+            }
+            const data = records.map(r => ({
+                'Date': r.date,
+                'Total Birds': r.totalBirds,
+                'Eggs Collected': r.eggsCollected,
+                'Feed Quantity (kg)': r.feedQuantity,
+                'Feed Cost (BDT)': r.feedCost,
+                'Eggs Sold': r.eggsSold,
+                'Price per Egg (BDT)': r.eggPrice,
+                'Other Expenses (BDT)': r.otherExpenses,
+                'Total Revenue (BDT)': r.totalSales,
+                'Total Expenses (BDT)': r.totalExpenses,
+                'Net Profit (BDT)': r.dailyProfit,
+                'Avg Eggs/Bird': r.avgEggsPerBird,
+                'Feed Cost/Egg': r.feedCostPerEgg,
+                'Notes': r.notes
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Quail Farm Records');
+            XLSX.writeFile(wb, 'Quail_Farm_Records.xlsx');
+            showToast('Exported to Excel successfully!', 'success');
+        }
+
+        function exportToCSV() {
+            if (records.length === 0) {
+                showToast('No records to export', 'warning');
+                return;
+            }
+            const headers = ['Date', 'Total Birds', 'Eggs Collected', 'Feed Quantity (kg)', 'Feed Cost (BDT)', 'Eggs Sold', 'Price per Egg (BDT)', 'Other Expenses (BDT)', 'Total Revenue (BDT)', 'Total Expenses (BDT)', 'Net Profit (BDT)', 'Avg Eggs/Bird', 'Feed Cost/Egg', 'Notes'];
+            const rows = records.map(r => [
+                r.date, r.totalBirds, r.eggsCollected, r.feedQuantity, r.feedCost, r.eggsSold, r.eggPrice, r.otherExpenses, r.totalSales, r.totalExpenses, r.dailyProfit, r.avgEggsPerBird, r.feedCostPerEgg, r.notes
+            ]);
+            const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Quail_Farm_Records.csv';
+            link.click();
+            showToast('Exported to CSV successfully!', 'success');
+        }
+
+        // ==================== BACKUP & RESTORE ====================
+        function exportBackup() {
+            const data = {
+                records: records,
+                settings: JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'),
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Quail_Farm_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            showToast('Backup exported successfully!', 'success');
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.records && Array.isArray(data.records)) {
+                        if (confirm(`This will import ${data.records.length} records. Existing data will be merged. Continue?`)) {
+                            // Merge records, avoiding duplicates by date
+                            const existingDates = new Set(records.map(r => r.date));
+                            let added = 0;
+                            data.records.forEach(r => {
+                                if (!existingDates.has(r.date)) {
+                                    records.push(r);
+                                    added++;
+                                }
+                            });
+                            records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                            saveRecords();
+                            if (data.settings) {
+                                localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
+                                loadSettings();
+                            }
+                            renderDashboard();
+                            renderRecords();
+                            generateReport();
+                            initCharts();
+                            showToast(`Imported ${added} new records successfully!`, 'success');
+                        }
+                    } else {
+                        showToast('Invalid backup file format', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error reading backup file', 'error');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function confirmClearAll() {
+            openModal('clearAllModal');
+        }
+
+        function clearAllData() {
+            records = [];
+            localStorage.removeItem(STORAGE_KEY);
+            renderDashboard();
+            renderRecords();
+            generateReport();
+            initCharts();
+            closeModal('clearAllModal');
+            showToast('All data cleared successfully', 'success');
+        }
+
+        // ==================== MODALS ====================
+        function showSettings() {
+            openModal('settingsModal');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+
+        // ==================== UTILITIES ====================
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => {
+                    m.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+        });
+
+        // Prevent zoom on double tap for mobile
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+    </script>
+</body>
+</html>
