@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a5f2a">
+    <title>Poultry Farm Calculator</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIlBvdWx0cnkgRmFybSBDYWxjIiwgInNob3J0X25hbWUiOiAiRmFybUNhbGMiLCAic3RhcnRfdXJsIjogIi4iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgImJhY2tncm91bmRfY29sb3IiOiAiIzFhNWYyYSIsICJ0aGVtZV9jb2xvciI6ICIjMWE1ZjJhIn0=">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            min-height: 100vh;
+            padding: 12px;
+            color: #1b5e20;
+        }
+        .app-header {
+            text-align: center;
+            padding: 16px 8px 8px;
+            position: relative;
+        }
+        .app-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1b5e20;
+            letter-spacing: -0.5px;
+        }
+        .app-header p {
+            font-size: 0.75rem;
+            color: #558b2f;
+            margin-top: 2px;
+        }
+        .ai-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #2e7d32;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-top: 8px;
+            border: 1px solid #a5d6a7;
+        }
+        .ai-status .dot {
+            width: 8px; height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+            padding: 0 4px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 16px 12px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .card:active { transform: scale(0.97); }
+        .card:focus-within { border-color: #66bb6a; }
+        .card-icon {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+        .card-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #689f38;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .card input {
+            width: 100%;
+            border: none;
+            background: #f1f8e9;
+            border-radius: 12px;
+            padding: 10px 8px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1b5e20;
+            text-align: center;
+            outline: none;
+            font-family: inherit;
+        }
+        .card input::placeholder { color: #aed581; font-weight: 400; font-size: 1rem; }
+        .card-other {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 2px solid #ffcc80;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            text-align: left;
+        }
+        .card-other .card-icon { font-size: 1.8rem; margin: 0; }
+        .card-other .card-label { margin: 0 0 2px; color: #e65100; }
+        .card-other input {
+            background: #fff;
+            text-align: left;
+            font-size: 1.2rem;
+        }
+        .card-other-info { flex: 1; }
+        .profit-section {
+            background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+            color: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 16px 4px 0;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(27,94,32,0.25);
+        }
+        .profit-section .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        .profit-section .value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 4px 0;
+        }
+        .profit-section .sub {
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+        .profit-section.loss {
+            background: linear-gradient(135deg, #bf360c 0%, #d84315 100%);
+            box-shadow: 0 6px 20px rgba(191,54,12,0.25);
+        }
+        .ai-guidance {
+            background: #fff;
+            border-radius: 20px;
+            padding: 18px;
+            margin: 16px 4px 0;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            border-left: 4px solid #4caf50;
+        }
+        .ai-guidance h3 {
+            font-size: 0.85rem;
+            color: #2e7d32;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ai-guidance ul {
+            list-style: none;
+            font-size: 0.82rem;
+            color: #555;
+            line-height: 1.7;
+        }
+        .ai-guidance li {
+            padding-left: 18px;
+            position: relative;
+        }
+        .ai-guidance li::before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        .save-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            border-radius: 16px;
+            padding: 14px 18px;
+            margin: 16px 4px 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        .save-info {
+            font-size: 0.8rem;
+            color: #689f38;
+            font-weight: 500;
+        }
+        .save-btn {
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(46,125,50,0.3);
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .save-btn:active { transform: scale(0.95); }
+        .save-btn.saved {
+            background: linear-gradient(135deg, #558b2f 0%, #7cb342 100%);
+        }
+        .screenshot-bar {
+            display: flex;
+            gap: 10px;
+            margin: 0 4px 16px;
+        }
+        .screenshot-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+            color: #fff;
+            border: none;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(21,101,192,0.3);
+            transition: all 0.2s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .screenshot-btn:active { transform: scale(0.95); }
+        .screenshot-btn.secondary {
+            background: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%);
+            box-shadow: 0 4px 12px rgba(106,27,154,0.3);
+        }
+        .history-section {
+            background: #fff;
+            border-radius: 20px;
+            padding: 18px;
+            margin: 0 4px 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        .history-section h3 {
+            font-size: 0.85rem;
+            color: #2e7d32;
+            margin-bottom: 12px;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.82rem;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-date { color: #888; font-weight: 500; }
+        .history-profit { font-weight: 700; }
+        .history-profit.pos { color: #2e7d32; }
+        .history-profit.neg { color: #d84315; }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1b5e20;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .input-group { width: 100%; }
+        .currency { font-size: 0.65rem; color: #9e9e9e; margin-top: 2px; }
+        #screenshotCanvas { display: none; }
+        .screenshot-preview-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .screenshot-preview-overlay.active { display: flex; }
+        .screenshot-preview-overlay img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .screenshot-preview-overlay .preview-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .preview-actions button {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .preview-actions .save-img {
+            background: #4caf50;
+            color: #fff;
+        }
+        .preview-actions .close-img {
+            background: #fff;
+            color: #333;
+        }
+        @media (max-width: 360px) {
+            .dashboard { gap: 8px; }
+            .card { padding: 12px 8px; }
+            .card input { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1>🐔 Poultry Farm Calculator</h1>
+        <p>Daily profit tracker & AI guidance</p>
+        <div class="ai-status">
+            <span class="dot"></span>
+            <span>AI Insights Active</span>
+        </div>
+    </div>
+
+    <div class="dashboard" id="captureArea">
+        <div class="card">
+            <div class="card-icon">🐤</div>
+            <div class="card-label">Bird Count</div>
+            <input type="number" id="birdCount" placeholder="45" min="0">
+        </div>
+        <div class="card">
+            <div class="card-icon">📦</div>
+            <div class="card-label">Egg Stock</div>
+            <input type="number" id="eggStock" placeholder="0" min="0">
+        </div>
+        <div class="card">
+            <div class="card-icon">🥚</div>
+            <div class="card-label">Eggs Collected</div>
+            <input type="number" id="eggCollect" placeholder="0" min="0">
+        </div>
+        <div class="card">
+            <div class="card-icon">🌾</div>
+            <div class="card-label">Feed Price (Total)</div>
+            <input type="number" id="feedPrice" placeholder="0" min="0">
+            <div class="currency">Today's total feed cost</div>
+        </div>
+        <div class="card">
+            <div class="card-icon">💰</div>
+            <div class="card-label">Eggs Sold</div>
+            <input type="number" id="eggSell" placeholder="0" min="0">
+            <div class="currency">Number of eggs sold</div>
+        </div>
+        <div class="card">
+            <div class="card-icon">💵</div>
+            <div class="card-label">Sell Price (per egg)</div>
+            <input type="number" id="sellPrice" placeholder="0" min="0" step="0.01">
+            <div class="currency">Price per egg</div>
+        </div>
+        <div class="card card-other">
+            <div class="card-icon">⚠️</div>
+            <div class="card-other-info">
+                <div class="card-label">Other Spend</div>
+                <input type="number" id="otherSpend" placeholder="0" min="0">
+                <div class="currency">Medicine, utilities, transport, etc.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profit-section" id="profitBox">
+        <div class="label">Today's Profit / Loss</div>
+        <div class="value" id="profitValue">0.00</div>
+        <div class="sub" id="profitSub">Enter your numbers above</div>
+    </div>
+
+    <div class="ai-guidance" id="aiGuidance">
+        <h3>🤖 AI Guidance for Improve</h3>
+        <ul id="guidanceList">
+            <li>Fill in your daily numbers to get smart tips</li>
+        </ul>
+    </div>
+
+    <div class="save-bar">
+        <div class="save-info">
+            <div>💾 Auto-saved to this device</div>
+            <div style="font-size:0.7rem;color:#aaa;margin-top:2px;" id="lastSaved">Never saved</div>
+        </div>
+        <button class="save-btn" id="saveBtn" onclick="manualSave()">Save Now</button>
+    </div>
+
+    <div class="screenshot-bar">
+        <button class="screenshot-btn" onclick="takeScreenshot()">
+            📸 Screenshot Report
+        </button>
+        <button class="screenshot-btn secondary" onclick="shareScreenshot()">
+            📤 Share Report
+        </button>
+    </div>
+
+    <div class="history-section" id="historySection" style="display:none;">
+        <h3>📊 Past 7 Days History</h3>
+        <div id="historyList"></div>
+    </div>
+
+    <div class="toast" id="toast">✅ Saved successfully!</div>
+
+    <div class="screenshot-preview-overlay" id="previewOverlay">
+        <img id="previewImg" src="" alt="Screenshot Preview">
+        <div class="preview-actions">
+            <button class="save-img" onclick="downloadScreenshot()">💾 Save Image</button>
+            <button class="close-img" onclick="closePreview()">❌ Close</button>
+        </div>
+    </div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        const inputs = ['birdCount','eggStock','eggCollect','feedPrice','eggSell','sellPrice','otherSpend'];
+        const STORAGE_KEY = 'poultryFarmData_v1';
+        const HISTORY_KEY = 'poultryFarmHistory_v1';
+        let currentScreenshot = null;
+
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                inputs.forEach(id => {
+                    if (data[id] !== undefined) document.getElementById(id).value = data[id];
+                });
+                if (data.lastSaved) document.getElementById('lastSaved').textContent = 'Last: ' + data.lastSaved;
+            }
+            calculate();
+            loadHistory();
+        }
+
+        function saveData() {
+            const data = {};
+            inputs.forEach(id => {
+                const val = document.getElementById(id).value;
+                data[id] = val === '' ? '' : parseFloat(val);
+            });
+            data.lastSaved = new Date().toLocaleString();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            document.getElementById('lastSaved').textContent = 'Last: ' + data.lastSaved;
+        }
+
+        function calculate() {
+            const birdCount = parseFloat(document.getElementById('birdCount').value) || 0;
+            const eggStock = parseFloat(document.getElementById('eggStock').value) || 0;
+            const eggCollect = parseFloat(document.getElementById('eggCollect').value) || 0;
+            const feedPrice = parseFloat(document.getElementById('feedPrice').value) || 0;
+            const eggSell = parseFloat(document.getElementById('eggSell').value) || 0;
+            const sellPrice = parseFloat(document.getElementById('sellPrice').value) || 0;
+            const otherSpend = parseFloat(document.getElementById('otherSpend').value) || 0;
+
+            const totalIncome = eggSell * sellPrice;
+            const totalExpense = feedPrice + otherSpend;
+            const profit = totalIncome - totalExpense;
+
+            const profitBox = document.getElementById('profitBox');
+            const profitValue = document.getElementById('profitValue');
+            const profitSub = document.getElementById('profitSub');
+
+            profitValue.textContent = (profit >= 0 ? '+' : '') + profit.toFixed(2);
+            profitSub.textContent = `Income: ${totalIncome.toFixed(2)} | Expense: ${totalExpense.toFixed(2)}`;
+
+            if (profit < 0) {
+                profitBox.classList.add('loss');
+            } else {
+                profitBox.classList.remove('loss');
+            }
+
+            generateGuidance(birdCount, eggStock, eggCollect, feedPrice, eggSell, sellPrice, otherSpend, profit, totalIncome);
+            saveData();
+        }
+
+        function generateGuidance(birds, stock, collected, feed, sold, price, other, profit, income) {
+            const tips = [];
+
+            if (birds > 0 && collected > 0) {
+                const rate = (collected / birds).toFixed(1);
+                if (rate < 0.5) {
+                    tips.push(`Egg production is low (${rate} eggs/bird). Check feed quality, water, and bird health.`);
+                } else if (rate >= 0.8) {
+                    tips.push(`Great production rate! ${rate} eggs per bird today. Keep up the good work!`);
+                }
+            }
+
+            if (feed > 0 && birds > 0) {
+                const feedPerBird = (feed / birds).toFixed(2);
+                tips.push(`Feed cost per bird: ${feedPerBird}. Monitor if this is rising over time.`);
+            }
+
+            if (profit < 0) {
+                tips.push(`⚠️ You're at a loss today. Consider reducing other expenses or increasing egg prices.`);
+            } else if (profit > 0 && income > 0) {
+                const margin = ((profit / income) * 100).toFixed(1);
+                tips.push(`Profit margin is ${margin}%. A healthy farm targets 30-40% margin.`);
+            }
+
+            if (stock > 0 && collected > 0) {
+                const days = (stock / (collected || 1)).toFixed(1);
+                tips.push(`You have ${days} days of stock. Don't let eggs sit too long — freshness matters!`);
+            }
+
+            if (sold < collected && collected > 0) {
+                const unsold = collected - sold;
+                tips.push(`${unsold} eggs collected but not sold. Find more buyers or adjust pricing.`);
+            }
+
+            if (other > feed * 0.5) {
+                tips.push(`Other expenses are high compared to feed. Review medicine/utility costs.`);
+            }
+
+            if (tips.length === 0) {
+                tips.push('Fill in more data to get personalized AI guidance for your farm.');
+            }
+
+            const list = document.getElementById('guidanceList');
+            list.innerHTML = tips.map(t => `<li>${t}</li>`).join('');
+        }
+
+        function manualSave() {
+            saveData();
+            addToHistory();
+            const btn = document.getElementById('saveBtn');
+            btn.textContent = '✓ Saved';
+            btn.classList.add('saved');
+            showToast('✅ Saved to your device!');
+            setTimeout(() => {
+                btn.textContent = 'Save Now';
+                btn.classList.remove('saved');
+            }, 2000);
+        }
+
+        function addToHistory() {
+            const profit = parseFloat(document.getElementById('profitValue').textContent) || 0;
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const today = new Date().toLocaleDateString();
+
+            const existing = history.find(h => h.date === today);
+            if (existing) {
+                existing.profit = profit;
+            } else {
+                history.push({ date: today, profit: profit });
+            }
+
+            if (history.length > 30) history.shift();
+
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const section = document.getElementById('historySection');
+            const list = document.getElementById('historyList');
+
+            if (history.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            const recent = history.slice(-7).reverse();
+            list.innerHTML = recent.map(h => {
+                const cls = h.profit >= 0 ? 'pos' : 'neg';
+                const sign = h.profit >= 0 ? '+' : '';
+                return `<div class="history-item">
+                    <span class="history-date">${h.date}</span>
+                    <span class="history-profit ${cls}">${sign}${h.profit.toFixed(2)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Screenshot functionality
+        async function takeScreenshot() {
+            showToast('📸 Capturing screenshot...');
+            try {
+                const element = document.body;
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#e8f5e9'
+                });
+                currentScreenshot = canvas.toDataURL('image/png');
+                document.getElementById('previewImg').src = currentScreenshot;
+                document.getElementById('previewOverlay').classList.add('active');
+            } catch (e) {
+                showToast('❌ Screenshot failed. Try again.');
+                console.error(e);
+            }
+        }
+
+        function closePreview() {
+            document.getElementById('previewOverlay').classList.remove('active');
+            currentScreenshot = null;
+        }
+
+        function downloadScreenshot() {
+            if (!currentScreenshot) return;
+            const link = document.createElement('a');
+            link.download = 'Poultry_Report_' + new Date().toISOString().slice(0,10) + '.png';
+            link.href = currentScreenshot;
+            link.click();
+            showToast('💾 Image saved to Downloads!');
+            closePreview();
+        }
+
+        async function shareScreenshot() {
+            showToast('📸 Preparing to share...');
+            try {
+                const element = document.body;
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#e8f5e9'
+                });
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                const file = new File([blob], 'Poultry_Report.png', { type: 'image/png' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Poultry Farm Report',
+                        text: 'My daily poultry farm report',
+                        files: [file]
+                    });
+                    showToast('📤 Shared successfully!');
+                } else {
+                    // Fallback: download instead
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = 'Poultry_Report_' + new Date().toISOString().slice(0,10) + '.png';
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    showToast('💾 Saved to Downloads (share not supported)');
+                }
+            } catch (e) {
+                showToast('❌ Share failed. Try Screenshot button instead.');
+                console.error(e);
+            }
+        }
+
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', calculate);
+        });
+
+        loadData();
+        setInterval(saveData, 10000);
+    </script>
+</body>
+</html>
